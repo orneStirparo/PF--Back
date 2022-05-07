@@ -1,19 +1,24 @@
-require('dotenv').config();
-const MongoClient = require('mongodb').MongoClient;
+import mongoClient from "mongodb";
+import dotenv from "dotenv";
+dotenv.config();
 
-const client = new MongoClient(process.env.URL);
+const url = process.env.URL;
 
-let instance = null;
+const client = new mongoClient.MongoClient(url);
 
-async function getConnection(){
-    if(instance == null){
-        try{
-            instance = await client.connect();
-        } catch(err){
-            console.log(err.message);
-        }
-    }
-    return instance;
+let connection = null;
+
+async function getConnection() {
+  if (connection === null) {
+    try {
+        connection = await client.connect();
+        return connection;
+      } catch (error) {
+        console.log(error);
+        throw new Error('Error en data - connection - getConnection(): ', error);
+      }
+  }
+  return connection;
 }
 
-module.exports = {getConnection};
+export default {getConnection};
