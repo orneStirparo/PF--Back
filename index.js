@@ -1,10 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import user from "./routers/users.js";
-// import category from "./routers/category.js";
-// import groups from "./routers/groups.js";
-// import events from "./routers/events.js";
-// import email from "./data/sendEmail.js";
 
 dotenv.config();
 const app = express();
@@ -14,10 +10,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-  res.send("Hello World v1.8.5");
+  res.send("Proyecto final");
 });
 
-app.use(user);
+app.use('/api/user', user);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
