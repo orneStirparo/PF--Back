@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post('/login.google', async (req, res) => {
     const { Token } = req.body;
+    console.log(Token);
     try {
         if (Token) {
             const userLogin = await usersDB.loginWithGoogle(Token);
