@@ -75,5 +75,6 @@ export default {
     loginWithGoogle,
     generateJWT,
     getUserId,
+    register
 };
 

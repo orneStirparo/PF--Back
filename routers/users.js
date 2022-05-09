@@ -21,6 +21,20 @@ router.post('/login.google', async (req, res) => {
     }
 })
 
+router.post('/register', async (req, res) => {
+    let { name, email, password } = req.body;
+    try {
+        if (name && email && password) {
+            const userRegister = await usersDB.register(name, email, password);
+            return res.json({ success: true, data: userRegister });
+        } else
+            return res.status(401).json({ success: false, message: "Se requiere enviar todos los datos, name-email-password" });
+    } catch (error) {
+        return res.status(401).json({ success: false, message: error.message })
+    }
+})
+
+
 router.get('/:id', auth, async (req, res) => {
     const { id } = req.params;
     try {
