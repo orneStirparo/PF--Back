@@ -2,6 +2,7 @@ import connection from "./connection.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { ObjectId } from "mongodb";
+import fetch from "node-fetch";
 
 dotenv.config();
 
@@ -16,15 +17,30 @@ async function loginWithGoogle(token) {
             if (!existUser) {
                 const newUser = await register(user);
                 const userBDA = await getUserId(newUser.insertedId);
+                console.log(userDBA);
                 return userBDA;
             } else {
+                console.log(existUser);
                 return existUser;
             }
         } catch (error) {
+            console.log(error);
             throw new Error('Error en data - user - loginWithGoogle(token): ', error);
         }
     } catch (error) {
+        console.log(error);
         throw new Error('');
+    }
+}
+
+async function getUserEmail(email) {
+    try {
+        email = email.toLowerCase().trim();
+        const mongoClient = await connection.getConnection();
+        const user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).findOne({ email: email });
+        return user;
+    } catch (error) {
+        throw new Error('Error en data - user - getUserEmail(email): ', error);
     }
 }
 
