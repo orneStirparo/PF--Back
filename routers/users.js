@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
     let { name, email, password } = req.body;
     try {
         if (name && email && password) {
-            const userRegister = await usersDB.register(name, email, password);
+            const userRegister = await usersDB.register(req.body);
             return res.json({ success: true, data: userRegister });
         } else
             return res.status(401).json({ success: false, message: "Se requiere enviar todos los datos, name-email-password" });

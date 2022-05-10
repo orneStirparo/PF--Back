@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
   res.send("Proyecto final");
 });
 
-app.use('/api/user', user);
+app.use('/user', user);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
