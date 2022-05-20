@@ -2,7 +2,8 @@ import connection from "./connection.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { ObjectId } from "mongodb";
-import fetch from "node-fetch";
+import bcrypt from "bcryptjs";
+// import multer from "../middleware/multerS3.js";
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ async function loginWithGoogle(token) {
             if (!existUser) {
                 const newUser = await register(user);
                 const userBDA = await getUserId(newUser.insertedId);
-                console.log(userDBA);
+                // console.log(usernameDB);
                 return userBDA;
             } else {
                 console.log(existUser);
@@ -33,24 +34,29 @@ async function loginWithGoogle(token) {
     }
 }
 
-async function getUserEmail(email) {
+async function login(email, password) {
     try {
-        email = email.toLowerCase().trim();
-        const mongoClient = await connection.getConnection();
-        const user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).findOne({ email: email });
-        return user;
-    } catch (error) {
-        throw new Error('Error en data - user - getUserEmail(email): ', error);
-    }
-}
+        const user = await getUserEmail(email);
+        if (!user)
+            throw new Error('Datos Invalidos');
 
-async function getUserId(id) {
-    try {
-        const mongoClient = await connection.getConnection();
-        const user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).findOne({ _id: new ObjectId(id) });
-        return user;
+        const isValido = bcrypt.compareSync(password, user.password);
+        if (!isValido)
+            throw new Error('Datos Invalidos')
+        const LoginUser = {
+            _id: user._id,
+            email: user.email,
+            name: user.name,
+            image_profile: user.image_profile,
+            groups_following: user.groups_following,
+            groups_requested: user.groups_requested,
+            groups_created: user.groups_created,
+            verified: user.verified,
+            verifiedCode: user.verifiedCode,
+        }
+        return LoginUser;
     } catch (error) {
-        throw new Error('Error en data - user - getUserId(id): ', error);
+        throw new Error(error);
     }
 }
 
@@ -77,6 +83,43 @@ async function register(user) {
     }
 }
 
+async function generateCode(email) {
+    try {
+        const user = await getUserEmail(email);
+        if (!user) {
+            throw new Error('Usuario no existe')
+        }
+        const code = parseInt(Math.floor(Math.random() * (999999 - 100000) + 100000));
+        const mongoClient = await connection.getConnection();
+        const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers)
+            .updateOne({ _id: user._id }, { $set: { codeVerification: code, verifiedCode: false } });
+        sendEmail.sendEmail(email, 'Hanuka Codigo de Verificación', code);
+        return result;
+    } catch (error) {
+        throw new Error('Error en data - user - generateCode(email): ', error);
+    }
+}
+
+async function verifyCode(email, code) {
+    try {
+        const user = await getUserEmail(email);
+        if (!user) {
+            throw new Error('Usuario no existe')
+        }
+        code = parseInt(code);
+        if (user.codeVerification === code) {
+            const mongoClient = await connection.getConnection();
+            const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers)
+                .updateOne({ _id: user._id }, { $set: { verifiedCode: true } });
+            return result;
+        } else {
+            throw new Error('Código incorrecto');
+        }
+    } catch (error) {
+        throw new Error('Error en data - user - verifyCode(user_id, code): ', error);
+    }
+}
+
 async function generateJWT(user) {
     try {
         const token = jwt.sign({ email: user.email, name: user.name, verified: user.verified, date: user.date_creation }, process.env.JWT_SECRET, { expiresIn: '365d' });
@@ -86,11 +129,83 @@ async function generateJWT(user) {
     }
 }
 
+async function changePassword(email, code, password, repeatPassword) {
+    try {
+        code = parseInt(code);
+        const user = await getUserEmail(email);
+        if (!user)
+            throw new Error('Usuario no existe')
+        if (password !== repeatPassword)
+            throw new Error('Las contraseñas no coinciden')
+        if (user.codeVerification !== code)
+            throw new Error('Código incorrecto')
+        const mongoClient = await connection.getConnection();
+        const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers)
+            .updateOne({ _id: user._id }, { $set: { password: bcrypt.hashSync(password, 9) } });
+        return result;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Error en data - user - verifyCode(user_id, code): ', error);
+    }
+}
+
+async function updateImage(user_id, newImage, item) {
+    try {
+        let user = await getUserId(user_id);
+        if (!user) {
+            throw new Error('Usuario no existe')
+        }
+        const imagePrevious = user.image_profile;
+        const mongoClient = await connection.getConnection();
+        const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers)
+            .updateOne({ _id: user._id }, { $set: { [item]: newImage } });
+        deleteImagePrevious(imagePrevious);
+        return result;
+    } catch (error) {
+        throw new Error('Error en data - user - updateImage(user_id, newImage): ', error);
+    }
+
+}
+
+// function deleteImagePrevious(nameImage) {
+//     let user_profile = 'img-user-profile.jpg'
+//     const name = nameImage.split('/').pop();
+//     if (name != user_profile)
+//         multer.deleteS3Profile(name);
+// }
+
+async function getUserEmail(email) {
+    try {
+        email = email.toLowerCase().trim();
+        const mongoClient = await connection.getConnection();
+        const user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).findOne({ email: email });
+        return user;
+    } catch (error) {
+        throw new Error('Error en data - user - getUserEmail(email): ', error);
+    }
+}
+
+async function getUserId(id) {
+    try {
+        const mongoClient = await connection.getConnection();
+        const user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).findOne({ _id: new ObjectId(id) });
+        return user;
+    } catch (error) {
+        throw new Error('Error en data - user - getUserId(id): ', error);
+    }
+}
+
 
 export default {
     loginWithGoogle,
+    login,
+    register,
+    generateCode,
+    verifyCode,
     generateJWT,
-    getUserId,
-    register
+    changePassword,
+    updateImage,
+    getUserEmail,
+    getUserId
 };
 
