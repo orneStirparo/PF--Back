@@ -61,18 +61,26 @@ async function login(email, password) {
     }
 }
 
-async function register(user) {
+async function register(body) {
+
+    console.log("Entre al register");
     try {
-        const user = await getUserEmail(email);
+
+        console.log("Entre al try");
+        
+        const user = await getUserEmail(body.email);
+
+        console.log("Pase el user");
+
         if (user) {
             console.log('El usuario ya existe');
             throw new Error('El usuario ya existe');
         }
         const imageDefault = process.env.IMAGE_DEFAULT;
         const newUser = {
-            email: user.email.toLowerCase().trim(),
-            name: user.name,
-            image_profile: (!user.picture) ? imageDefault : user.picture,
+            email: body.email.toLowerCase().trim(),
+            name: body.name,
+            image_profile: (!body.picture) ? imageDefault : body.picture,
             date_creation: Date.parse(new Date()),
             groups_following: [],
             groups_requested: [],
@@ -81,6 +89,8 @@ async function register(user) {
             codeVerification: parseInt(Math.floor(Math.random() * (999999 - 100000) + 100000)),
             verifiedCode: false,
         }
+
+        console.log(newUser);
         const mongoClient = await connection.getConnection();
         const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).insertOne(newUser);
         // sendEmail.sendEmail(email, 'Registro Hanuka Verificación', newUser.codeVerification);
@@ -181,11 +191,15 @@ async function updateImage(user_id, newImage, item) {
 //         multer.deleteS3Profile(name);
 // }
 
-async function getUserEmail(email) {
+async function getUserEmail(paramEmail) {
+
+    console.log("Entre al getEmail");
+
     try {
-        email = email.toLowerCase().trim();
+        let email = paramEmail.toLowerCase().trim();
         const mongoClient = await connection.getConnection();
         const user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).findOne({ email: email });
+        console.log(user);
         return user;
     } catch (error) {
         throw new Error('Error en data - user - getUserEmail(email): ', error);

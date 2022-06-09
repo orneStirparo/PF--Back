@@ -39,6 +39,7 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
     let { name, email, password } = req.body;
+    console.log(req.body);
     try {
         if (name && email && password) {
             const userRegister = await usersDB.register(req.body);
