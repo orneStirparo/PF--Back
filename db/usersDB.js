@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
+//import sendEmail from "./SandEmailDB.js"
 // import multer from "../middleware/multerS3.js";
 
 dotenv.config();
@@ -62,6 +63,11 @@ async function login(email, password) {
 
 async function register(user) {
     try {
+        const user = await getUserEmail(email);
+        if (user) {
+            console.log('El usuario ya existe');
+            throw new Error('El usuario ya existe');
+        }
         const imageDefault = process.env.IMAGE_DEFAULT;
         const newUser = {
             email: user.email.toLowerCase().trim(),
@@ -77,6 +83,7 @@ async function register(user) {
         }
         const mongoClient = await connection.getConnection();
         const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsers).insertOne(newUser);
+        // sendEmail.sendEmail(email, 'Registro Hanuka Verificación', newUser.codeVerification);
         return result;
     } catch (error) {
         throw new Error('Error en data - user - addUser(user): ', error);
