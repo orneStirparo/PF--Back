@@ -1,9 +1,8 @@
 import connection from "./connection.js";
 import dotenv from "dotenv";
-import userControllers from "./usersDB.js";
-import groupsControllers from "./groupsDB.js";
+import userControllers from "./user.js";
+import groupsControllers from "./groups.js";
 import { ObjectId } from "mongodb";
-
 dotenv.config();
 
 async function addEvent(body, group_id) {
@@ -23,7 +22,7 @@ async function addEvent(body, group_id) {
             date_creation: Date.parse(new Date())
         }
         const mongoClient = await connection.getConnection();
-        const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents).insertOne(event);
+        const result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4).insertOne(event);
         return result;
     } catch (error) {
         throw new Error('Error en data - event - addEvent(body, group_id): ', error);
@@ -57,7 +56,7 @@ async function getEventsGroup(group_id) {
         if (!group)
             throw new Error('Error en data - events - getEventsGroupAll(group_id): No existe el grupo');
         const mongoClient = await connection.getConnection();
-        const events = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+        const events = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
             .find({ group_id: group._id, timeUnix: { $gte: timeUnix } }).toArray();
         return {
             group: group,
@@ -73,9 +72,9 @@ async function addAssist(id_user, event_id) {
         const user = await userControllers.getUserId(id_user);
         if (user) {
             const mongoClient = await connection.getConnection();
-            const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+            const result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
                 .updateOne({ _id: new ObjectId(event_id) }, { $addToSet: { participants: user._id } });
-            const reject = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+            const reject = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
                 .updateOne({ _id: new ObjectId(event_id) }, { $pull: { no_participants: user._id } });
             return {
                 result: result,
@@ -95,9 +94,9 @@ async function addNoAssist(id_user, event_id) {
         const event = await getEvent(event_id);
         if (user && event) {
             const mongoClient = await connection.getConnection();
-            const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+            const result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
                 .updateOne({ _id: new ObjectId(event_id) }, { $addToSet: { no_participants: user._id } });
-            const reject = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+            const reject = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
                 .updateOne({ _id: new ObjectId(event_id) }, { $pull: { participants: user._id } });
             return {
                 result: result,
@@ -112,7 +111,7 @@ async function addNoAssist(id_user, event_id) {
 async function getEvent(id) {
     try {
         const mongoClient = await connection.getConnection();
-        const event = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents).findOne({ _id: new ObjectId(id) });
+        const event = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4).findOne({ _id: new ObjectId(id) });
         return event;
     } catch (error) {
         throw new Error('Error en data - events - getEvent(id): ', error);
@@ -153,7 +152,7 @@ async function getEventsGroupAll(group_id) {
         if (!group)
             throw new Error('Error en data - events - getEventsGroupAll(group_id): No existe el grupo');
         const mongoClient = await connection.getConnection();
-        const events = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+        const events = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
             .find({ group_id: group._id }).toArray();
         return events;
     } catch (error) {
@@ -192,7 +191,7 @@ async function eventsUser(id_group, id_user) {
         if (!group)
             throw new Error('Error en data - events - eventsUser(id_group): No existe el grupo');
         const mongoClient = await connection.getConnection();
-        const events = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+        const events = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
             .find({ group_id: group._id, participants: new ObjectId(id_user) }).toArray();
         return {
             group: group,
@@ -206,7 +205,7 @@ async function eventsUser(id_group, id_user) {
 async function deleteEvent(id) {
     try {
         const mongoClient = await connection.getConnection();
-        const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionEvents)
+        const result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_4)
             .deleteOne({ _id: new ObjectId(id) });
         return result;
     } catch (error) {

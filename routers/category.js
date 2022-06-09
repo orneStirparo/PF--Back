@@ -1,10 +1,10 @@
 import express from "express";
-import categoryControllers from "../db/categoryDB.js";
+import categoryControllers from "../data/category.js";
 import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/api/v1/categories', auth, async (req, res) => {
     try {
         const categories = await categoryControllers.getCategories();
         if (categories.length > 0)

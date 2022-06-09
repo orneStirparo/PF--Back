@@ -2,7 +2,7 @@ import mongoClient from "mongodb";
 import dotenv from "dotenv";
 dotenv.config();
 
-const url = process.env.URL;
+const url = process.env.CONNECTION_MONGODB;
 
 const client = new mongoClient.MongoClient(url);
 

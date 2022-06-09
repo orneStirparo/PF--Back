@@ -1,10 +1,10 @@
 import express from "express";
-import eventsControllers from "../db/eventsDB.js";
+import eventsControllers from "../data/events.js";
 import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post('/:group_id', auth, async (req, res) => {
+router.post('/api/v1/event/:group_id', auth, async (req, res) => {
     /* coordinates, namePlace, */
     let { title, date, time, timeUnix, lugar,  description } = req.body;
     let { group_id } = req.params;
@@ -25,7 +25,7 @@ router.post('/:group_id', auth, async (req, res) => {
     }
 })
 
-router.get('/:id_user', auth, async (req, res) => {
+router.get('/api/v1/events/:id_user', auth, async (req, res) => {
     let { id_user } = req.params;
     try {
         if (!id_user) {
@@ -42,7 +42,7 @@ router.get('/:id_user', auth, async (req, res) => {
     }
 })
 
-router.post('/assist/:event_id', auth, async (req, res) => {
+router.post('/api/v1/event/assist/:event_id', auth, async (req, res) => {
     let { id_user } = req.body;
     let { event_id } = req.params;
     try {
@@ -60,7 +60,7 @@ router.post('/assist/:event_id', auth, async (req, res) => {
     }
 })
 
-router.get('/:id', auth, async (req, res) => {
+router.get('/api/v1/event/:id', auth, async (req, res) => {
     let { id } = req.params;
     try {
         if (!id) {
@@ -77,7 +77,7 @@ router.get('/:id', auth, async (req, res) => {
     }
 })
 
-router.get('/assistants/:id_event', auth, async (req, res) => {
+router.get('/api/v1/event/assistants/:id_event', auth, async (req, res) => {
     let { id_event } = req.params;
     try {
         if (!id_event) {
@@ -94,7 +94,7 @@ router.get('/assistants/:id_event', auth, async (req, res) => {
     }
 })
 
-router.get('/reject/:id_event', auth, async (req, res) => {
+router.get('/api/v1/event/reject/:id_event', auth, async (req, res) => {
     let { id_event } = req.params;
     try {
         if (!id_event) {
@@ -111,7 +111,7 @@ router.get('/reject/:id_event', auth, async (req, res) => {
     }
 })
 
-router.delete('/assist/:event_id', auth, async (req, res) => {
+router.delete('/api/v1/event/assist/:event_id', auth, async (req, res) => {
     let { id_user } = req.body;
     let { event_id } = req.params;
     try {
@@ -129,7 +129,7 @@ router.delete('/assist/:event_id', auth, async (req, res) => {
     }
 })
 
-router.get('/group/:id_group', auth, async (req, res) => {
+router.get('/api/v1/events/group/:id_group', auth, async (req, res) => {
     let { id_group } = req.params;
     try {
         if (!id_group) {
@@ -146,7 +146,7 @@ router.get('/group/:id_group', auth, async (req, res) => {
     }
 })
 
-router.get('/user/:id_user', auth, async (req, res) => {
+router.get('/api/v1/events/user/:id_user', auth, async (req, res) => {
     let { id_user } = req.params;
     try {
         if (!id_user) {
@@ -163,7 +163,7 @@ router.get('/user/:id_user', auth, async (req, res) => {
     }
 })
 
-router.delete('/', auth, async (req, res) => {
+router.delete('/api/v1/event/', auth, async (req, res) => {
     let { id } = req.body;
     try {
         if (!id) {

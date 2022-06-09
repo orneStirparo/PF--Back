@@ -1,16 +1,15 @@
 import connection from "./connection.js";
 import dotenv from "dotenv";
 import { ObjectId } from "mongodb";
-import userControllers from "./usersDB.js";
-// import multer from "../middleware/multerS3.js";
-
+import userControllers from "./user.js";
+import multer from "../middleware/multerS3.js";
 dotenv.config();
 
 async function getGroup(name) {
     try {
         name = name.toLowerCase().trim();
         const mongoClient = await connection.getConnection();
-        const group = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).findOne({ name: name });
+        const group = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).findOne({ name: name });
         return group;
     } catch (error) {
         throw new Error('Error en data - groups - getGroup(name): ', error);
@@ -23,7 +22,7 @@ async function getArrayGroup(ids) {
         let arrayGroup = [];
         for (let i = 0; i < ids.length; i++) {
             try {
-                const group = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).findOne({ _id: new ObjectId(ids[i]) });
+                const group = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).findOne({ _id: new ObjectId(ids[i]) });
                 arrayGroup.push(group);
             } catch (error) {
                 throw new Error('Error en data - groups - getArrayGroup(ids): ', error);
@@ -39,7 +38,7 @@ async function getGroupId(id) {
     try {
         console.log(id);
         const mongoClient = await connection.getConnection();
-        const group = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).findOne({ _id: new ObjectId(id) });
+        const group = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).findOne({ _id: new ObjectId(id) });
         return group;
     } catch (error) {
         throw new Error('Error en data - groups - getGroupId(id): ', error);
@@ -50,7 +49,7 @@ async function getGroupCategory(category) {
     try {
         category = category.toLowerCase().trim();
         const mongoClient = await connection.getConnection();
-        const groups = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).find({ category: category }).toArray();
+        const groups = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).find({ category: category }).toArray();
         return groups;
     } catch (error) {
         throw new Error('Error en data - groups - getGroupCategory(category): ', error);
@@ -87,7 +86,7 @@ async function addGroup(group) {
             const group_exist = await getGroup(group.name);
             if (!group_exist) {
                 const mongoClient = await connection.getConnection();
-                result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).insertOne(group);
+                result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).insertOne(group);
                 if (result) {
                     const addGroupAdmin = await userControllers.addGroupAdmin(user._id, result.insertedId);
                 }
@@ -127,15 +126,16 @@ async function adduserGroup(user_id, group_id) {
                 let ya_existe_user = group.followers.find(e => e == user_id)
                 if (ya_existe_group || ya_existe_user)
                     throw new Error('El usuario ya esta en el grupo')
-                result_user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).updateOne({ _id: new ObjectId(user_id) }, { $addToSet: { groups_following: group._id } });
-                result_group = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).updateOne({ _id: new ObjectId(group_id) }, { $addToSet: { followers: user._id } });
+                result_user = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1).updateOne({ _id: new ObjectId(user_id) }, { $addToSet: { groups_following: group._id } });
+                result_group = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).updateOne({ _id: new ObjectId(group_id) }, { $addToSet: { followers: user._id } });
             } else {
                 let ya_existe_group = user.groups_requested.find(e => e == group_id)
                 let ya_existe_user = group.requests.find(e => e == user_id)
                 if (ya_existe_group || ya_existe_user)
                     throw new Error('El usuario ya esta en el grupo')
-                result_user = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsuers).updateOne({ _id: new ObjectId(user_id) }, { $addToSet: { groups_requested: group._id } });
-                result_group = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).updateOne({ _id: new ObjectId(group_id) }, { $addToSet: { requests: user._id } });
+
+                result_user = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1).updateOne({ _id: new ObjectId(user_id) }, { $addToSet: { groups_requested: group._id } });
+                result_group = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).updateOne({ _id: new ObjectId(group_id) }, { $addToSet: { requests: user._id } });
             }
 
             return { user: result_user, group: result_group };
@@ -154,7 +154,7 @@ async function updateImage(group_id, newImage, item) {
         }
         const imagePrevious = group[item];
         const mongoClient = await connection.getConnection();
-        const result = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups)
+        const result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3)
             .updateOne({ _id: group._id }, { $set: { [item]: newImage } });
         deleteImagePrevious(imagePrevious);
         return result;
@@ -164,13 +164,13 @@ async function updateImage(group_id, newImage, item) {
 
 }
 
-// function deleteImagePrevious(nameImage) {
-//     let gProfile = 'img-group-profile.jpg'
-//     let gPortada = 'img-portada.jpg'
-//     const name = nameImage.split('/').pop();
-//     if (name != gProfile && name != gPortada)
-//         multer.deleteS3Group(name);
-// }
+function deleteImagePrevious(nameImage) {
+    let gProfile = 'img-group-profile.jpg'
+    let gPortada = 'img-portada.jpg'
+    const name = nameImage.split('/').pop();
+    if (name != gProfile && name != gPortada)
+        multer.deleteS3Group(name);
+}
 
 async function getRequestsFollowers(id_user) {
     try {
@@ -232,14 +232,14 @@ async function postUserAccept(id_user, id_group) {
             throw new Error('El usuario no existe')
         const mongoClient = await connection.getConnection();
 
-        const accept_user_group_following = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsuers)
+        const accept_user_group_following = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1)
             .updateOne({ _id: new ObjectId(id_user) }, { $addToSet: { groups_following: group._id } });
-        const delete_user_group_requested = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsuers)
+        const delete_user_group_requested = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1)
             .updateOne({ _id: new ObjectId(id_user) }, { $pull: { groups_requested: group._id } });
 
-        const accept_user_group_follower = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups)
+        const accept_user_group_follower = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3)
             .updateOne({ _id: new ObjectId(id_group) }, { $addToSet: { followers: user._id } });
-        const delete_user_group_requests = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups)
+        const delete_user_group_requests = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3)
             .updateOne({ _id: new ObjectId(id_group) }, { $pull: { requests: user._id } });
 
         if (accept_user_group_following && delete_user_group_requested && accept_user_group_follower && delete_user_group_requests)
@@ -265,10 +265,10 @@ async function deleteUserReject(id_user, id_group) {
             throw new Error('El usuario no existe')
         const mongoClient = await connection.getConnection();
 
-        const delete_user_group_requested = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsuers)
+        const delete_user_group_requested = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1)
             .updateOne({ _id: new ObjectId(id_user) }, { $pull: { groups_requested: group._id } });
 
-        const delete_user_group_requests = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups)
+        const delete_user_group_requests = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3)
             .updateOne({ _id: new ObjectId(id_group) }, { $pull: { requests: user._id } });
 
         if (delete_user_group_requested && delete_user_group_requests)
@@ -334,8 +334,8 @@ async function deleteFollow(id_user, id_group) {// elimina un user de un grupo y
         if (!group)
             throw new Error('El grupo no existe');
         const mongoClient = await connection.getConnection();
-        const delete_user_group_following = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsuers).updateOne({ _id: new ObjectId(id_user) }, { $pull: { groups_following: group._id } });
-        const delete_user_group_follower = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).updateOne({ _id: new ObjectId(id_group) }, { $pull: { followers: user._id } });
+        const delete_user_group_following = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1).updateOne({ _id: new ObjectId(id_user) }, { $pull: { groups_following: group._id } });
+        const delete_user_group_follower = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).updateOne({ _id: new ObjectId(id_group) }, { $pull: { followers: user._id } });
         return {
             userDelete: delete_user_group_following,
             groupDelete: delete_user_group_follower
@@ -355,8 +355,8 @@ async function deleteRequeted(id_user, id_group) {//elimina un user de un grupo 
             throw new Error('El grupo no existe');
 
         const mongoClient = await connection.getConnection();
-        const delete_user_group_requests = await mongoClient.db(process.env.nameDB).collection(process.env.collectionUsuers).updateOne({ _id: new ObjectId(id_user) }, { $pull: { groups_requested: group._id } });
-        const delete_user_group_requested = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).updateOne({ _id: new ObjectId(id_group) }, { $pull: { requests: user._id } });
+        const delete_user_group_requests = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1).updateOne({ _id: new ObjectId(id_user) }, { $pull: { groups_requested: group._id } });
+        const delete_user_group_requested = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).updateOne({ _id: new ObjectId(id_group) }, { $pull: { requests: user._id } });
 
         return {
             userDelete: delete_user_group_requests,
@@ -377,7 +377,7 @@ async function postAdmin(id_group, email_admin) {
         if (!user)
             throw new Error('El usuario no existe');
         const mongoClient = await connection.getConnection();
-        const update_group = await mongoClient.db(process.env.nameDB).collection(process.env.collectionGroups).updateOne({ _id: new ObjectId(id_group) }, { $addToSet: { administrators: user._id } });
+        const update_group = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_3).updateOne({ _id: new ObjectId(id_group) }, { $addToSet: { administrators: user._id } });
         return update_group;
     } catch (error) {
         throw new Error('Error en data - group - postAdmin(id_group, email_admin): ', error);

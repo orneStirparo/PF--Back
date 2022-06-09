@@ -1,11 +1,11 @@
 import express from "express";
-import groupsControllers from "../db/groupsDB.js";
+import groupsControllers from "../data/groups.js";
 import auth from "../middleware/auth.js";
-// import multer from "../middleware/multerS3.js";
+import multer from "../middleware/multerS3.js";
 
 const router = express.Router();
 
-router.get('/user/:id', auth, async (req, res) => {
+router.get('/api/v1/groups/user/:id', auth, async (req, res) => {
     let { id } = req.params;
     try {
         if (id) {
@@ -18,9 +18,9 @@ router.get('/user/:id', auth, async (req, res) => {
     }
 })
 
-router.post('/', auth, async (req, res) => {
+router.post('/api/v1/group', auth, async (req, res) => {
     let { name, category, visibility, city, town, email_owner, whatsApp, instagram } = req.body;
-    console.log(email.email_owner);
+    console.log(instagram.length);
     try {
         if (!name || !category || !visibility || !email_owner || !city || !town || !whatsApp) {
             return res.status(400).json({ success: false, message: "Es requerido el parametro 'name', 'category', 'visibility', 'email_owner' 'city' 'town' 'whatsApp'" });
@@ -36,7 +36,7 @@ router.post('/', auth, async (req, res) => {
     }
 })
 
-router.get('/:category', auth, async (req, res) => {
+router.get('/api/v1/groups/:category', auth, async (req, res) => {
     let { category } = req.params;
     try {
         if (!category) {
@@ -54,7 +54,7 @@ router.get('/:category', auth, async (req, res) => {
     }
 })
 
-router.post('/user', auth, async (req, res) => {
+router.post('/api/v1/group/user', auth, async (req, res) => {
     let { group_id, user_id } = req.body;
     try {
         if (!group_id || !user_id) {
@@ -72,23 +72,23 @@ router.post('/user', auth, async (req, res) => {
     }
 })
 
-// router.post('/image/:id', auth, multer.uploadS3Groups.single('image'), async (req, res) => {
-//     console.log('req.file: ', req.file);
-//     try {
-//         if (req.file && req.params.id && req.body.item) {
-//             console.log(req.file.location);
-//             const userId = await groupsControllers.updateImage(req.params.id, req.file.location, req.body.item);
-//             return res.json({ success: true, message: "Image uploaded successfully", data: req.file.location });
-//         } else {
-//             return res.json({ success: false, message: "Image upload failed" });
-//         }
-//     } catch (error) {
-//         return res.json({ success: false, message: "Image upload failed" });
-//     }
+router.post('/api/v1/group/image/:id', auth, multer.uploadS3Groups.single('image'), async (req, res) => {
+    console.log('req.file: ', req.file);
+    try {
+        if (req.file && req.params.id && req.body.item) {
+            console.log(req.file.location);
+            const userId = await groupsControllers.updateImage(req.params.id, req.file.location, req.body.item);
+            return res.json({ success: true, message: "Image uploaded successfully", data: req.file.location });
+        } else {
+            return res.json({ success: false, message: "Image upload failed" });
+        }
+    } catch (error) {
+        return res.json({ success: false, message: "Image upload failed" });
+    }
 
-// })
+})
 
-router.get('/requestsFollowers/:id', auth, async (req, res) => {
+router.get('/api/v1/requestsFollowers/:id', auth, async (req, res) => {
     try {
         if (req.params.id) {
             const requests = await groupsControllers.getRequestsFollowers(req.params.id);
@@ -102,7 +102,7 @@ router.get('/requestsFollowers/:id', auth, async (req, res) => {
     }
 })
 
-router.post('/userAccept', auth, async (req, res) => {
+router.post('/api/v1/group/userAccept', auth, async (req, res) => {
     let { group_id, user_id } = req.body;
     try {
         if (!group_id || !user_id) {
@@ -119,7 +119,7 @@ router.post('/userAccept', auth, async (req, res) => {
     }
 })
 
-router.delete('/userDelete', auth, async (req, res) => {
+router.delete('/api/v1/group/userDelete', auth, async (req, res) => {
     let { group_id, user_id } = req.body;
     try {
         if (!group_id || !user_id) {
@@ -136,7 +136,7 @@ router.delete('/userDelete', auth, async (req, res) => {
     }
 })
 
-router.get('/:id', auth, async (req, res) => {
+router.get('/api/v1/group/:id', auth, async (req, res) => {
     let { id } = req.params;
     console.log('id: ', id);
     try {
@@ -154,7 +154,7 @@ router.get('/:id', auth, async (req, res) => {
     }
 })
 
-router.get('/following/:id_user', auth, async (req, res) => {
+router.get('/api/v1/groups/following/:id_user', auth, async (req, res) => {
     let { id_user } = req.params;
     try {
         if (!id_user) {
@@ -172,7 +172,7 @@ router.get('/following/:id_user', auth, async (req, res) => {
     }
 })
 
-router.get('/created/:id_user', auth, async (req, res) => {
+router.get('/api/v1/groups/created/:id_user', auth, async (req, res) => {
     let { id_user } = req.params;
     try {
         if (!id_user) {
@@ -190,7 +190,7 @@ router.get('/created/:id_user', auth, async (req, res) => {
     }
 })
 
-router.get('/followers/:id_group', auth, async (req, res) => {
+router.get('/api/v1/group/followers/:id_group', auth, async (req, res) => {
     let { id_group } = req.params;
     try {
         if (!id_group) {
@@ -207,7 +207,7 @@ router.get('/followers/:id_group', auth, async (req, res) => {
     }
 })
 
-router.post('/unfollower', auth, async (req, res) => {
+router.post('/api/v1/group/unfollower', auth, async (req, res) => {
     let { group_id, user_id } = req.body;
     try {
         if (!group_id || !user_id) {
@@ -224,7 +224,7 @@ router.post('/unfollower', auth, async (req, res) => {
     }
 })
 
-router.post('/unrequested', auth, async (req, res) => {
+router.post('/api/v1/group/unrequested', auth, async (req, res) => {
     let { group_id, user_id } = req.body;
     try {
         if (!group_id || !user_id) {
@@ -241,7 +241,7 @@ router.post('/unrequested', auth, async (req, res) => {
     }
 })
 
-router.post('/admin/:id_group', auth, async (req, res) => {
+router.post('/api/v1/group/admin/:id_group', auth, async (req, res) => {
     let { id_group } = req.params;
     let { email_admin } = req.body;
     try {
