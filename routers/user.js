@@ -5,15 +5,17 @@ import auth from "../middleware/auth.js";
 import multer from "../middleware/multerS3.js";
 dotenv.config();
 
+
 const router = express.Router();
+
 router.post('/api/v1/user/image/:id', auth, multer.uploadS3Profile.single('image'), async (req, res) => {
     try {
         if (req.file && req.params.id && req.body.item) {
-            console.log(req.file.location);
+            console.log(':::::::::',req.file.location);
             const userId = await userControllers.updateImage(req.params.id, req.file.location, req.body.item);
             return res.json({ success: true, message: "Image uploaded successfully", data: req.file.location });
         } else {
-            return res.json({ success: false, message: "Image upload failed" });
+            return res.json({ success: false, message: "Image upload failed!" });
         }
     } catch (error) {
         return res.json({ success: false, message: "Image upload failed" });
