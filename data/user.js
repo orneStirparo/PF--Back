@@ -124,7 +124,7 @@ async function register(name, email, password) {
         }
         const mongoClient = await connection.getConnection();
         const result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1).insertOne(newUser);
-        sendEmail.sendEmail(email, 'Registro Hanuka Verificación', newUser.codeVerification);
+        sendEmail.sendEmail(email, 'Registro Proyecto Final Verificación', newUser.codeVerification);
         return result;
     } catch (error) {
         console.log(error);
@@ -182,7 +182,7 @@ async function generateCode(email) {
         const mongoClient = await connection.getConnection();
         const result = await mongoClient.db(process.env.DBA).collection(process.env.DBA_TABLE_1)
             .updateOne({ _id: user._id }, { $set: { codeVerification: code, verifiedCode: false } });
-        sendEmail.sendEmail(email, 'Hanuka Codigo de Verificación', code);
+        sendEmail.sendEmail(email, 'Proyecto Final Codigo de Verificación', code);
         return result;
     } catch (error) {
         throw new Error('Error en data - user - generateCode(email): ', error);
